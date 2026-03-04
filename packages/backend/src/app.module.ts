@@ -10,6 +10,8 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { HealthModule } from './modules/health/health.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { DuplicatesModule } from './modules/duplicates/duplicates.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RoleRateLimitGuard } from './common/guards/role-rate-limit.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -41,6 +43,8 @@ import envConfig from './config/env.config';
     AuditModule,
     HealthModule,
     UploadModule,
+    DuplicatesModule,
+    SettingsModule,
   ],
   providers: [
     AuditLogService,

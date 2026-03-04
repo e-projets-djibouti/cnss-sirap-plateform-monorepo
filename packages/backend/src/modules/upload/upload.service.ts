@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import * as XLSX from 'xlsx';
 import { CNSSRecord } from '@sirap/shared';
 import { MinioService } from '../../common/minio/minio.service';
+import { parseNetAmount } from './upload.parsing';
 
 @Injectable()
 export class UploadService {
@@ -64,7 +65,7 @@ export class UploadService {
                     no,
                     brenet: this.toString(row[1]),
                     nomsEtPrenoms: this.toString(row[2]),
-                    netAPayer: this.parseAmount(row[3]),
+                    netAPayer: parseNetAmount(row[3]),
                     codePeriode: this.toString(row[4]),
                     typeRelation: this.toString(row[5]),
                     nomMere: this.toOptionalString(row[6]),
@@ -79,27 +80,6 @@ export class UploadService {
 
         return records;
     }
-
-    private parseAmount(value: unknown): number {
-        if (value === null || value === undefined || value === '') return 0;
-
-        const asString = String(value)
-            .replace(/\s+/g, '')
-            .replace(/[^\d,.-]/g, '');
-
-        if (!asString) return 0;
-
-        let normalized = asString;
-        if (normalized.includes(',') && !normalized.includes('.')) {
-            normalized = normalized.replace(',', '.');
-        } else {
-            normalized = normalized.replace(/,/g, '');
-        }
-
-        const parsed = Number.parseFloat(normalized);
-        return Number.isNaN(parsed) ? 0 : parsed;
-    }
-
     private toString(value: unknown): string {
         return String(value ?? '').trim();
     }

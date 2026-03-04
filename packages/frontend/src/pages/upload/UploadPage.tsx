@@ -19,6 +19,18 @@ interface UploadParseResponse {
     };
 }
 
+interface DetectDuplicatesResponse {
+    records: CNSSRecord[];
+    stats: {
+        duplicates: number;
+        duplicateGroups: number;
+    };
+    config: {
+        columns: string[];
+        operator: 'AND' | 'OR';
+    };
+}
+
 export function UploadPage() {
     const navigate = useNavigate();
     const [file, setFile] = useState<File | null>(null);
@@ -44,12 +56,18 @@ export function UploadPage() {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            sessionStorage.setItem('cnssData', JSON.stringify(data.records));
+            const duplicates = await api.post<DetectDuplicatesResponse>('/api/duplicates/detect', {
+                records: data.records,
+            });
+
+            sessionStorage.setItem('cnssData', JSON.stringify(duplicates.data.records));
             sessionStorage.setItem('cnssFileName', data.fileName);
             sessionStorage.setItem('cnssUploadStorage', JSON.stringify(data.storage));
+            sessionStorage.setItem('cnssDuplicateStats', JSON.stringify(duplicates.data.stats));
+            sessionStorage.setItem('cnssDuplicateConfig', JSON.stringify(duplicates.data.config));
 
             setMessage(
-                `Import réussi: ${data.stats.totalRecords} lignes valides. Version MinIO: v${String(data.storage.version).padStart(4, '0')}`,
+                `Import réussi: ${data.stats.totalRecords} lignes valides. Doublons: ${duplicates.data.stats.duplicates}. Version MinIO: v${String(data.storage.version).padStart(4, '0')}`,
             );
 
             navigate('/dashboard', { replace: true });

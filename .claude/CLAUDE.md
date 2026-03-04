@@ -700,19 +700,20 @@ Seuls les originaux (`isOriginal = true`) uploadent des fichiers. Les duplicatas
 - [x] Module Upload : endpoint multipart/form-data pour fichier Excel (`POST /api/upload/parse`)
 - [x] Service ExcelParser : SheetJS, mapping 10 colonnes, parsing netAPayer
 - [x] Stockage MinIO des uploads Excel : chaque upload est persisté et versionné (`uploads/excel/.../vNNNN-*`)
-- [ ] Module Duplicates : DuplicatesService avec algorithmes AND et OR
-- [ ] Module Settings : CRUD table Setting (clé `duplicate_columns`, `duplicate_operator`)
-- [ ] Schéma Prisma : modèle Setting → migration
-- [ ] Tests unitaires : parsing montants (tous les cas), détection doublons AND/OR
+- [x] Module Duplicates : endpoint `POST /api/duplicates/detect` + algorithmes AND et OR
+- [x] Module Settings : CRUD table Setting (clé `duplicate_columns`, `duplicate_operator`)
+- [x] Schéma Prisma : modèle Setting → migration
+- [x] Tests unitaires : parsing montants (tous les cas), détection doublons AND/OR
 
 **Frontend :**
 - [x] Page Upload : sélection fichier, validation format et envoi multipart
 - [ ] Parsing client SheetJS (même logique que backend — choix hybride)
 - [x] Stockage sessionStorage : `cnssData` (JSON records), `cnssFileName`, métadonnées MinIO upload
+- [x] Détection des doublons côté API puis persistance session (`cnssData` marqué + stats/config)
 - [x] Redirection → /dashboard après parsing réussi
 - [x] Gestion erreurs : format invalide, fichier vide
 
-**Validation (état actuel) :** Fichier Excel multi-onglets parsé correctement et montants français normalisés; chaque upload est stocké dans MinIO avec version incrémentale; la page Upload persiste les données en session puis redirige vers le dashboard. Module doublons/settings reste à implémenter.
+**Validation (état actuel) :** Fichier Excel multi-onglets parsé correctement et montants français normalisés; chaque upload est stocké dans MinIO avec version incrémentale; la détection doublons AND/OR fonctionne via API et les enregistrements marqués sont persistés en session; la configuration doublons est persistée en base (`settings`) et appliquée par défaut par l’API; les tests unitaires parsing/doublons passent.
 
 ---
 
