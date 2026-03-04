@@ -29,6 +29,9 @@ const RolesPage = lazy(() =>
 const UsersPage = lazy(() =>
   import('@/pages/admin/UsersPage').then((module) => ({ default: module.UsersPage })),
 );
+const AuditPage = lazy(() =>
+  import('@/pages/admin/AuditPage').then((module) => ({ default: module.AuditPage })),
+);
 
 function RouteLoader() {
   return (
@@ -100,6 +103,10 @@ export const router = createBrowserRouter([
                   {
                     path: 'users',
                     element: withSuspense(<UsersPage />),
+                  },
+                  {
+                    path: 'audit',
+                    element: withSuspense(<AuditPage />),
                   },
                 ],
               },

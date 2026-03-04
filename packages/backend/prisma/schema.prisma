@@ -85,3 +85,24 @@ model RefreshToken {
 
   @@map("refresh_tokens")
 }
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  timestamp  DateTime @default(now())
+  method     String
+  path       String
+  statusCode Int
+  durationMs Int
+  ip         String?
+  userAgent  String?
+  userId     String?
+  roleName   String?
+  success    Boolean
+  error      String?
+
+  @@index([timestamp(sort: Desc)])
+  @@index([method, timestamp(sort: Desc)])
+  @@index([userId, timestamp(sort: Desc)])
+  @@index([success, timestamp(sort: Desc)])
+  @@map("audit_logs")
+}

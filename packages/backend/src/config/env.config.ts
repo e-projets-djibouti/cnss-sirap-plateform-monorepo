@@ -21,6 +21,7 @@ export default () => ({
     secretKey: process.env.MINIO_SECRET_KEY ?? 'minioadmin',
     useSSL: process.env.MINIO_USE_SSL === 'true',
     avatarBucket: process.env.MINIO_AVATAR_BUCKET ?? 'avatars',
+    auditBucket: process.env.MINIO_AUDIT_BUCKET ?? 'audit-archives',
     publicUrl: process.env.MINIO_PUBLIC_URL,
   },
   redis: {
@@ -44,6 +45,7 @@ export default () => ({
       (process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none' | undefined) ??
       'strict',
     auditLogPath: process.env.AUDIT_LOG_PATH ?? 'logs/security-audit.log',
+    auditRetentionDays: parseInt(process.env.AUDIT_RETENTION_DAYS ?? '90', 10),
     roleRateLimit: {
       windowSec: parseInt(process.env.RL_WINDOW_SEC ?? '60', 10),
       public: parseInt(process.env.RL_PUBLIC_LIMIT ?? '60', 10),

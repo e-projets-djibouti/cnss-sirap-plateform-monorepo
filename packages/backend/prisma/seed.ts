@@ -16,11 +16,13 @@ const DEFAULT_PERMISSIONS = [
   { action: 'roles:manage', description: 'Gérer les rôles et leurs permissions' },
   { action: 'permissions:read', description: 'Lire les permissions disponibles' },
   { action: 'permissions:manage', description: 'Gérer les permissions' },
+  { action: 'audit:read', description: 'Lire les journaux d\'audit' },
+  { action: 'audit:manage', description: 'Archiver et purger les journaux d\'audit' },
 ];
 
 const ADMIN_PERMISSIONS = [
   'users:read', 'users:create', 'users:update',
-  'roles:read', 'permissions:read',
+  'roles:read', 'permissions:read', 'audit:read', 'audit:manage',
 ];
 
 async function main() {

@@ -20,6 +20,7 @@ export class MinioService implements OnModuleInit {
     async onModuleInit(): Promise<void> {
         try {
             await this.ensureAvatarBucket();
+            await this.ensureAuditBucket();
         } catch (error) {
             this.logger.warn(
                 `MinIO init warning: ${error instanceof Error ? error.message : 'unknown error'}`,
@@ -38,8 +39,23 @@ export class MinioService implements OnModuleInit {
         return `${this.publicBaseUrl}/${bucket}/${objectName}`;
     }
 
+    async uploadAuditArchive(objectName: string, buffer: Buffer): Promise<string> {
+        const bucket = this.auditBucket;
+        await this.ensureAuditBucket();
+
+        await this.client.putObject(bucket, objectName, buffer, buffer.length, {
+            'Content-Type': 'application/x-ndjson',
+        });
+
+        return `${this.publicBaseUrl}/${bucket}/${objectName}`;
+    }
+
     private get avatarBucket(): string {
         return this.config.get<string>('minio.avatarBucket', 'avatars');
+    }
+
+    private get auditBucket(): string {
+        return this.config.get<string>('minio.auditBucket', 'audit-archives');
     }
 
     private get publicBaseUrl(): string {
@@ -74,5 +90,13 @@ export class MinioService implements OnModuleInit {
                 ],
             }),
         );
+    }
+
+    private async ensureAuditBucket(): Promise<void> {
+        const bucket = this.auditBucket;
+        const exists = await this.client.bucketExists(bucket);
+        if (!exists) {
+            await this.client.makeBucket(bucket, 'us-east-1');
+        }
     }
 }

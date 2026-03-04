@@ -53,6 +53,20 @@ export interface User {
   profile: { fullName: string; phone?: string | null; avatarUrl?: string | null } | null;
 }
 
+export interface AuditEvent {
+  timestamp: string;
+  method: string;
+  path: string;
+  statusCode: number;
+  durationMs: number;
+  ip?: string;
+  userAgent?: string;
+  userId?: string;
+  roleName?: string;
+  success: boolean;
+  error?: string;
+}
+
 // ── Pagination ────────────────────────────────────────────────────────────────
 
 export interface PaginatedResponse<T> {
