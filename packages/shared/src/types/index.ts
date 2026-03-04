@@ -8,11 +8,6 @@ export interface BaseEntity {
 
 // ── Enums ────────────────────────────────────────────────────────────────────
 
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  AGENT = 'AGENT',
-}
-
 export enum RecordStatus {
   PENDING = 'PENDING',
   VALIDATED = 'VALIDATED',
