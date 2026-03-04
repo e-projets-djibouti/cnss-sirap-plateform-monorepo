@@ -12,7 +12,7 @@ export class PermissionsGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
     private readonly cache: PermissionsCache,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredPermission = this.reflector.getAllAndOverride<
@@ -33,7 +33,7 @@ export class PermissionsGuard implements CanActivate {
   }
 
   private async loadPermissions(roleId: string): Promise<Set<string>> {
-    const cached = this.cache.get(roleId);
+    const cached = await this.cache.get(roleId);
     if (cached) return cached;
 
     const rows = await this.prisma.rolePermission.findMany({
@@ -42,7 +42,7 @@ export class PermissionsGuard implements CanActivate {
     });
 
     const permissions = new Set(rows.map((r) => r.permission.action));
-    this.cache.set(roleId, permissions);
+    await this.cache.set(roleId, permissions);
     return permissions;
   }
 }

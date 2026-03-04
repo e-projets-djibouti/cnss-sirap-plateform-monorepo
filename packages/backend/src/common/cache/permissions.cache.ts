@@ -1,33 +1,29 @@
 import { Injectable } from '@nestjs/common';
-
-interface CacheEntry {
-  permissions: Set<string>;
-  expiresAt: number;
-}
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class PermissionsCache {
-  private readonly TTL_MS = 5 * 60 * 1000; // 5 minutes
-  private readonly store = new Map<string, CacheEntry>();
+  private readonly TTL_SECONDS = 5 * 60;
 
-  get(roleId: string): Set<string> | null {
-    const entry = this.store.get(roleId);
-    if (!entry) return null;
-    if (Date.now() > entry.expiresAt) {
-      this.store.delete(roleId);
-      return null;
-    }
-    return entry.permissions;
+  constructor(private readonly redis: RedisService) { }
+
+  async get(roleId: string): Promise<Set<string> | null> {
+    const key = this.cacheKey(roleId);
+    const permissions = await this.redis.getJson<string[]>(key);
+    if (!permissions) return null;
+    return new Set(permissions);
   }
 
-  set(roleId: string, permissions: Set<string>): void {
-    this.store.set(roleId, {
-      permissions,
-      expiresAt: Date.now() + this.TTL_MS,
-    });
+  async set(roleId: string, permissions: Set<string>): Promise<void> {
+    const key = this.cacheKey(roleId);
+    await this.redis.setJson(key, [...permissions], this.TTL_SECONDS);
   }
 
-  invalidate(roleId: string): void {
-    this.store.delete(roleId);
+  async invalidate(roleId: string): Promise<void> {
+    await this.redis.delete(this.cacheKey(roleId));
+  }
+
+  private cacheKey(roleId: string) {
+    return `role-permissions:${roleId}`;
   }
 }

@@ -9,7 +9,7 @@ import { PermissionsCache } from '../../common/cache/permissions.cache';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { PartialType } from '@nestjs/mapped-types';
 
-export class UpdateRoleDto extends PartialType(CreateRoleDto) {}
+export class UpdateRoleDto extends PartialType(CreateRoleDto) { }
 
 const ROLE_SELECT = {
   id: true,
@@ -30,7 +30,7 @@ export class RolesService {
   constructor(
     private prisma: PrismaService,
     private cache: PermissionsCache,
-  ) {}
+  ) { }
 
   findAll() {
     return this.prisma.role.findMany({
@@ -61,7 +61,7 @@ export class RolesService {
 
   async update(id: string, dto: UpdateRoleDto) {
     await this.findOne(id);
-    this.cache.invalidate(id);
+    await this.cache.invalidate(id);
     return this.prisma.role.update({
       where: { id },
       data: dto,
@@ -75,7 +75,7 @@ export class RolesService {
       throw new BadRequestException('Les rôles système ne peuvent pas être supprimés');
     if (role._count.users > 0)
       throw new BadRequestException(`Ce rôle est assigné à ${role._count.users} utilisateur(s)`);
-    this.cache.invalidate(id);
+    await this.cache.invalidate(id);
     await this.prisma.role.delete({ where: { id } });
     return { message: `Rôle "${role.name}" supprimé` };
   }
@@ -93,7 +93,7 @@ export class RolesService {
       create: { roleId, permissionId },
     });
 
-    this.cache.invalidate(roleId);
+    await this.cache.invalidate(roleId);
     return this.findOne(roleId);
   }
 
@@ -108,7 +108,7 @@ export class RolesService {
       where: { roleId_permissionId: { roleId, permissionId } },
     });
 
-    this.cache.invalidate(roleId);
+    await this.cache.invalidate(roleId);
     return this.findOne(roleId);
   }
 }

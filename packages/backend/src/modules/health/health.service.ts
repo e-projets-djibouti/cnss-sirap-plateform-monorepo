@@ -1,21 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../../common/redis/redis.service';
 
 @Injectable()
 export class HealthService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly config: ConfigService,
+        private readonly redis: RedisService,
     ) { }
 
     async infraStatus() {
-        const [database, minio] = await Promise.all([
+        const [database, minio, redis] = await Promise.all([
             this.checkDatabase(),
             this.checkMinio(),
+            this.checkRedis(),
         ]);
 
-        const status = database.status === 'up' && minio.status === 'up' ? 'up' : 'degraded';
+        const status =
+            database.status === 'up' && minio.status === 'up' && redis.status === 'up'
+                ? 'up'
+                : 'degraded';
 
         return {
             status,
@@ -23,6 +29,7 @@ export class HealthService {
             services: {
                 database,
                 minio,
+                redis,
             },
         };
     }
@@ -82,6 +89,25 @@ export class HealthService {
                 status: 'down' as const,
                 url,
                 error: error instanceof Error ? error.message : 'MinIO check failed',
+            };
+        }
+    }
+
+    private async checkRedis() {
+        const host = this.config.get<string>('redis.host', 'localhost');
+        const port = this.config.get<number>('redis.port', 6379);
+
+        try {
+            const pong = await this.redis.ping();
+            return {
+                status: pong === 'PONG' ? ('up' as const) : ('down' as const),
+                endpoint: `${host}:${port}`,
+            };
+        } catch (error) {
+            return {
+                status: 'down' as const,
+                endpoint: `${host}:${port}`,
+                error: error instanceof Error ? error.message : 'Redis check failed',
             };
         }
     }

@@ -11,6 +11,7 @@ import { HealthModule } from './modules/health/health.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
 import { PermissionsCacheModule } from './common/cache/permissions-cache.module';
+import { RedisModule } from './common/redis/redis.module';
 import envConfig from './config/env.config';
 
 @Module({
@@ -22,6 +23,7 @@ import envConfig from './config/env.config';
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     PrismaModule,
+    RedisModule,
     PermissionsCacheModule,
     AuthModule,
     UsersModule,
