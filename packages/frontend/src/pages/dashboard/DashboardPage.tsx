@@ -4,13 +4,14 @@ import { Shield, Users, Activity } from 'lucide-react';
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const displayName = user?.profile?.fullName?.trim() || user?.email || 'Utilisateur';
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Tableau de bord</h1>
         <p className="text-muted-foreground">
-          Bienvenue, {user?.profile.firstName} {user?.profile.lastName}
+          Bienvenue, {displayName}
         </p>
       </div>
 

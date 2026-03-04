@@ -1,0 +1,14 @@
+import { IsString, Matches, MinLength } from 'class-validator';
+
+export class ChangePasswordDto {
+    @IsString()
+    currentPassword!: string;
+
+    @IsString()
+    @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
+    @Matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/, {
+        message:
+            'Le mot de passe doit contenir une majuscule, un chiffre et un caractère spécial',
+    })
+    newPassword!: string;
+}

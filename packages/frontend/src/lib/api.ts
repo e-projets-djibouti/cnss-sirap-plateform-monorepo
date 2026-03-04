@@ -2,22 +2,18 @@ import axios, { type InternalAxiosRequestConfig } from 'axios';
 import type { RefreshResponse } from '@/types/api';
 
 const TOKEN_KEY = 'sirap_access_token';
-const REFRESH_KEY = 'sirap_refresh_token';
 
 export const tokenStorage = {
   getAccess: () => localStorage.getItem(TOKEN_KEY),
-  getRefresh: () => localStorage.getItem(REFRESH_KEY),
-  set: (access: string, refresh: string) => {
+  set: (access: string) => {
     localStorage.setItem(TOKEN_KEY, access);
-    localStorage.setItem(REFRESH_KEY, refresh);
   },
   clear: () => {
     localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_KEY);
   },
 };
 
-export const api = axios.create({ baseURL: '' });
+export const api = axios.create({ baseURL: '', withCredentials: true });
 
 // ── Request : injecter le Bearer token ────────────────────────────────────────
 api.interceptors.request.use((config) => {
@@ -59,17 +55,13 @@ api.interceptors.response.use(
     original._retry = true;
     isRefreshing = true;
 
-    const refreshToken = tokenStorage.getRefresh();
-    if (!refreshToken) {
-      isRefreshing = false;
-      tokenStorage.clear();
-      window.dispatchEvent(new Event('auth:logout'));
-      return Promise.reject(error);
-    }
-
     try {
-      const { data } = await axios.post<RefreshResponse>('/api/auth/refresh', { refreshToken });
-      tokenStorage.set(data.accessToken, data.refreshToken);
+      const { data } = await axios.post<RefreshResponse>(
+        '/api/auth/refresh',
+        {},
+        { withCredentials: true },
+      );
+      tokenStorage.set(data.accessToken);
       api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
       flushQueue(null, data.accessToken);
       original.headers.Authorization = `Bearer ${data.accessToken}`;

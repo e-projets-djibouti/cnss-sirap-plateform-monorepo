@@ -3,19 +3,44 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.disable('x-powered-by');
+  app.use(cookieParser());
+
+  const corsOrigins = config.get<string[]>('app.corsOrigins', ['http://localhost:5173']);
 
   // Sécurité
-  app.use(helmet());
+  app.use(
+    helmet({
+      hsts: { maxAge: 31_536_000, includeSubDomains: true, preload: true },
+      referrerPolicy: { policy: 'no-referrer' },
+      crossOriginOpenerPolicy: { policy: 'same-origin' },
+      crossOriginResourcePolicy: { policy: 'same-site' },
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:'],
+          connectSrc: ["'self'", ...corsOrigins],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+    }),
+  );
 
   // CORS
   app.enableCors({
-    origin: config.get<string[]>('app.corsOrigins', ['http://localhost:5173']),
+    origin: corsOrigins,
     credentials: true,
   });
 

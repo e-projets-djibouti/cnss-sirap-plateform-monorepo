@@ -22,11 +22,7 @@ export class UpdateUserDto {
 
   @IsString()
   @IsOptional()
-  firstName?: string;
-
-  @IsString()
-  @IsOptional()
-  lastName?: string;
+  fullName?: string;
 
   @IsString()
   @IsOptional()

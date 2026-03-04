@@ -3,20 +3,19 @@
 export interface AuthUser {
   id: string;
   email: string;
+  mustChangePassword: boolean;
   isActive: boolean;
   role: { id: string; name: string; level: number };
-  profile: { firstName: string; lastName: string; phone?: string | null } | null;
+  profile: { fullName: string; phone?: string | null; avatarUrl?: string | null } | null;
 }
 
 export interface LoginResponse {
   user: AuthUser;
   accessToken: string;
-  refreshToken: string;
 }
 
 export interface RefreshResponse {
   accessToken: string;
-  refreshToken: string;
 }
 
 // ── Roles & Permissions ───────────────────────────────────────────────────────
@@ -47,10 +46,11 @@ export interface Role {
 export interface User {
   id: string;
   email: string;
+  mustChangePassword: boolean;
   isActive: boolean;
   createdAt: string;
   role: { id: string; name: string; level: number };
-  profile: { firstName: string; lastName: string; phone?: string | null } | null;
+  profile: { fullName: string; phone?: string | null; avatarUrl?: string | null } | null;
 }
 
 // ── Pagination ────────────────────────────────────────────────────────────────

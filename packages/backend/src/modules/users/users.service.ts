@@ -2,10 +2,13 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
 import { Prisma } from '@prisma/client';
+import { MailService } from '../../common/mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -13,15 +16,44 @@ import { UpdateUserDto } from './dto/update-user.dto';
 const USER_SELECT = {
   id: true,
   email: true,
+  mustChangePassword: true,
   isActive: true,
   createdAt: true,
   role: { select: { id: true, name: true, level: true } },
-  profile: { select: { firstName: true, lastName: true, phone: true } },
+  profile: { select: { fullName: true, phone: true, avatarUrl: true } },
 } as const;
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) { }
+
+  private generateTemporaryPassword(length = 12): string {
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lower = 'abcdefghijklmnopqrstuvwxyz';
+    const digits = '0123456789';
+    const special = '!@#$%^&*';
+    const all = upper + lower + digits + special;
+
+    const required = [
+      upper[randomInt(upper.length)],
+      lower[randomInt(lower.length)],
+      digits[randomInt(digits.length)],
+      special[randomInt(special.length)],
+    ];
+
+    const remaining = Array.from({ length: Math.max(length - required.length, 0) }, () => {
+      return all[randomInt(all.length)];
+    });
+
+    const password = [...required, ...remaining]
+      .sort(() => randomInt(0, 2) - 1)
+      .join('');
+
+    return password;
+  }
 
   private async resolveRoleId(roleId?: string): Promise<string> {
     if (roleId) {
@@ -66,26 +98,49 @@ export class UsersService {
     });
     if (exists) throw new ConflictException('Cet email est déjà utilisé');
 
+    const temporaryPassword = this.generateTemporaryPassword(12);
     const [hashedPassword, roleId] = await Promise.all([
-      bcrypt.hash(dto.password, 12),
+      bcrypt.hash(temporaryPassword, 12),
       this.resolveRoleId(dto.roleId),
     ]);
 
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         password: hashedPassword,
+        mustChangePassword: true,
         roleId,
         profile: {
           create: {
-            firstName: dto.firstName,
-            lastName: dto.lastName,
+            fullName: dto.fullName,
             phone: dto.phone,
           },
         },
       },
       select: USER_SELECT,
     });
+
+    try {
+      await this.mail.sendEmail(
+        dto.email,
+        'Vos accès CNSS-SIRAP',
+        `
+          <p>Bonjour ${dto.fullName},</p>
+          <p>Votre compte CNSS-SIRAP a été créé.</p>
+          <p><strong>Identifiant:</strong> ${dto.email}</p>
+          <p><strong>Mot de passe temporaire:</strong> ${temporaryPassword}</p>
+          <p>Vous devrez le changer lors de votre première connexion.</p>
+        `,
+        `Compte CNSS-SIRAP créé\nIdentifiant: ${dto.email}\nMot de passe temporaire: ${temporaryPassword}`,
+      );
+    } catch {
+      await this.prisma.user.delete({ where: { id: user.id } });
+      throw new InternalServerErrorException(
+        'Création utilisateur annulée: envoi email impossible. Vérifiez la configuration SMTP.',
+      );
+    }
+
+    return user;
   }
 
   async update(id: string, dto: UpdateUserDto) {
@@ -94,11 +149,10 @@ export class UsersService {
     const data: Prisma.UserUpdateInput = {};
     if (dto.email) data.email = dto.email;
     if (dto.password) data.password = await bcrypt.hash(dto.password, 12);
-    if (dto.firstName ?? dto.lastName ?? dto.phone) {
+    if (dto.fullName ?? dto.phone) {
       data.profile = {
         update: {
-          ...(dto.firstName && { firstName: dto.firstName }),
-          ...(dto.lastName && { lastName: dto.lastName }),
+          ...(dto.fullName && { fullName: dto.fullName }),
           ...(dto.phone && { phone: dto.phone }),
         },
       };

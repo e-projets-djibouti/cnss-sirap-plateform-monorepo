@@ -15,6 +15,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<AuthUser | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -27,16 +28,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Initialisation au montage ──────────────────────────────────────────────
   useEffect(() => {
-    const token = tokenStorage.getAccess();
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-    api
-      .get<AuthUser>('/api/auth/me')
-      .then(({ data }) => setUser(data))
-      .catch(() => tokenStorage.clear())
-      .finally(() => setIsLoading(false));
+    const initializeAuth = async () => {
+      const token = tokenStorage.getAccess();
+
+      try {
+        if (!token) {
+          const refresh = await api.post<{ accessToken: string }>('/api/auth/refresh');
+          tokenStorage.set(refresh.data.accessToken);
+        }
+
+        const me = await api.get<AuthUser>('/api/auth/me');
+        setUser(me.data);
+      } catch {
+        tokenStorage.clear();
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void initializeAuth();
   }, []);
 
   // ── Écoute l'événement de déconnexion forcée (intercepteur axios) ──────────
@@ -58,16 +69,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
     });
-    tokenStorage.set(data.accessToken, data.refreshToken);
+    tokenStorage.set(data.accessToken);
     setUser(data.user);
-    navigate('/dashboard', { replace: true });
+    navigate(data.user.mustChangePassword ? '/change-password' : '/dashboard', {
+      replace: true,
+    });
   };
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   const logout = async () => {
-    const refreshToken = tokenStorage.getRefresh();
     try {
-      if (refreshToken) await api.post('/api/auth/logout', { refreshToken });
+      await api.post('/api/auth/logout');
     } finally {
       tokenStorage.clear();
       setUser(null);
@@ -75,9 +87,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const { data } = await api.get<AuthUser>('/api/auth/me');
+      setUser(data);
+      return data;
+    } catch {
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, isLoading, login, logout }}
+      value={{ user, isAuthenticated: !!user, isLoading, login, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

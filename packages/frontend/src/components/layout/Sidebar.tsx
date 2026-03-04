@@ -13,6 +13,7 @@ export function Sidebar() {
   const { user } = useAuth();
   const level = user?.role.level ?? 0;
   const visibleItems = NAV_ITEMS.filter(item => level >= item.minLevel);
+  const displayName = user?.profile?.fullName?.trim() || user?.email || 'Utilisateur';
 
   return (
     <aside className="flex h-full w-64 flex-col border-r bg-card">
@@ -43,7 +44,7 @@ export function Sidebar() {
       </nav>
       <div className="border-t p-3">
         <div className="rounded-md bg-muted px-3 py-2">
-          <p className="text-xs font-medium">{user?.profile.firstName} {user?.profile.lastName}</p>
+          <p className="text-xs font-medium">{displayName}</p>
           <p className="text-xs text-muted-foreground">{user?.role.name}</p>
         </div>
       </div>

@@ -7,14 +7,14 @@ const OWNER_EMAIL = 'admin@cnss.dj';
 const OWNER_PASSWORD = 'Admin@1234';
 
 const DEFAULT_PERMISSIONS = [
-  { action: 'users:read',         description: 'Lire les utilisateurs' },
-  { action: 'users:create',       description: 'Créer des utilisateurs' },
-  { action: 'users:update',       description: 'Modifier des utilisateurs' },
-  { action: 'users:delete',       description: 'Supprimer des utilisateurs' },
-  { action: 'users:change-role',  description: 'Changer le rôle d\'un utilisateur' },
-  { action: 'roles:read',         description: 'Lire les rôles' },
-  { action: 'roles:manage',       description: 'Gérer les rôles et leurs permissions' },
-  { action: 'permissions:read',   description: 'Lire les permissions disponibles' },
+  { action: 'users:read', description: 'Lire les utilisateurs' },
+  { action: 'users:create', description: 'Créer des utilisateurs' },
+  { action: 'users:update', description: 'Modifier des utilisateurs' },
+  { action: 'users:delete', description: 'Supprimer des utilisateurs' },
+  { action: 'users:change-role', description: 'Changer le rôle d\'un utilisateur' },
+  { action: 'roles:read', description: 'Lire les rôles' },
+  { action: 'roles:manage', description: 'Gérer les rôles et leurs permissions' },
+  { action: 'permissions:read', description: 'Lire les permissions disponibles' },
   { action: 'permissions:manage', description: 'Gérer les permissions' },
 ];
 
@@ -78,7 +78,7 @@ async function main() {
       password: hashedPassword,
       roleId: ownerRole.id,
       isActive: true,
-      profile: { create: { firstName: 'Super', lastName: 'Admin' } },
+      profile: { create: { fullName: 'Super Admin' } },
     },
     include: { role: true },
   });

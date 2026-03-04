@@ -43,6 +43,15 @@ export class RedisService implements OnModuleDestroy {
         await this.client.del(key);
     }
 
+    async incrementWithExpiry(key: string, ttlSeconds: number): Promise<number> {
+        await this.ensureConnected();
+        const count = await this.client.incr(key);
+        if (count === 1) {
+            await this.client.expire(key, ttlSeconds);
+        }
+        return count;
+    }
+
     private async ensureConnected() {
         if (this.client.status !== 'ready' && this.client.status !== 'connect') {
             await this.client.connect();
