@@ -20,6 +20,9 @@ const ChangePasswordPage = lazy(() =>
 const DashboardPage = lazy(() =>
   import('@/pages/dashboard/DashboardPage').then((module) => ({ default: module.DashboardPage })),
 );
+const UploadPage = lazy(() =>
+  import('@/pages/upload/UploadPage').then((module) => ({ default: module.UploadPage })),
+);
 const ProfilePage = lazy(() =>
   import('@/pages/profile/ProfilePage').then((module) => ({ default: module.ProfilePage })),
 );
@@ -91,6 +94,10 @@ export const router = createBrowserRouter([
               {
                 path: 'dashboard',
                 element: withSuspense(<DashboardPage />),
+              },
+              {
+                path: 'upload',
+                element: withSuspense(<UploadPage />),
               },
               {
                 path: 'profile',

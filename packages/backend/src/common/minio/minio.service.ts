@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'minio';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class MinioService implements OnModuleInit {
@@ -21,6 +22,7 @@ export class MinioService implements OnModuleInit {
         try {
             await this.ensureAvatarBucket();
             await this.ensureAuditBucket();
+            await this.ensureUploadsBucket();
         } catch (error) {
             this.logger.warn(
                 `MinIO init warning: ${error instanceof Error ? error.message : 'unknown error'}`,
@@ -50,12 +52,50 @@ export class MinioService implements OnModuleInit {
         return `${this.publicBaseUrl}/${bucket}/${objectName}`;
     }
 
+    async uploadExcelVersioned(
+        originalFileName: string,
+        buffer: Buffer,
+        mimeType: string,
+    ): Promise<{ objectName: string; url: string; version: number }> {
+        const bucket = this.uploadsBucket;
+        await this.ensureUploadsBucket();
+
+        const now = new Date();
+        const yy = now.getFullYear().toString();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+
+        const safeFileName = this.sanitizeFileName(originalFileName);
+        const fileBase = safeFileName.replace(/\.[^.]+$/, '');
+        const extension = this.extractExtension(safeFileName);
+        const prefix = `excel/${fileBase}/${yy}/${mm}/${dd}/`;
+
+        const version = (await this.countObjectsByPrefix(bucket, prefix)) + 1;
+        const objectName = `${prefix}v${String(version).padStart(4, '0')}-${Date.now()}-${randomUUID()}${extension}`;
+
+        await this.client.putObject(bucket, objectName, buffer, buffer.length, {
+            'Content-Type': mimeType,
+            'X-Amz-Meta-Original-Filename': originalFileName,
+            'X-Amz-Meta-Upload-Version': String(version),
+        });
+
+        return {
+            objectName,
+            url: `${this.publicBaseUrl}/${bucket}/${objectName}`,
+            version,
+        };
+    }
+
     private get avatarBucket(): string {
         return this.config.get<string>('minio.avatarBucket', 'avatars');
     }
 
     private get auditBucket(): string {
         return this.config.get<string>('minio.auditBucket', 'audit-archives');
+    }
+
+    private get uploadsBucket(): string {
+        return this.config.get<string>('minio.uploadsBucket', 'uploads');
     }
 
     private get publicBaseUrl(): string {
@@ -98,5 +138,38 @@ export class MinioService implements OnModuleInit {
         if (!exists) {
             await this.client.makeBucket(bucket, 'us-east-1');
         }
+    }
+
+    private async ensureUploadsBucket(): Promise<void> {
+        const bucket = this.uploadsBucket;
+        const exists = await this.client.bucketExists(bucket);
+        if (!exists) {
+            await this.client.makeBucket(bucket, 'us-east-1');
+        }
+    }
+
+    private extractExtension(fileName: string): string {
+        const idx = fileName.lastIndexOf('.');
+        if (idx < 0) return '.xlsx';
+        return fileName.slice(idx).toLowerCase();
+    }
+
+    private sanitizeFileName(fileName: string): string {
+        const normalized = fileName.trim().toLowerCase();
+        const safe = normalized.replace(/[^a-z0-9._-]/g, '-').replace(/-+/g, '-');
+        return safe || `upload-${Date.now()}.xlsx`;
+    }
+
+    private async countObjectsByPrefix(bucket: string, prefix: string): Promise<number> {
+        const stream = this.client.listObjectsV2(bucket, prefix, true);
+        return new Promise<number>((resolve, reject) => {
+            let count = 0;
+
+            stream.on('data', () => {
+                count += 1;
+            });
+            stream.on('end', () => resolve(count));
+            stream.on('error', (error) => reject(error));
+        });
     }
 }

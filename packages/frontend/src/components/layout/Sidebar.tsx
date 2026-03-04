@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router';
-import { LayoutDashboard, Shield, Users, ScrollText } from 'lucide-react';
+import { LayoutDashboard, Shield, Users, ScrollText, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, minLevel: 10 },
+  { path: '/upload', label: 'Import Excel', icon: Upload, minLevel: 10 },
   { path: '/admin/roles', label: 'Rôles', icon: Shield, minLevel: 50 },
   { path: '/admin/users', label: 'Utilisateurs', icon: Users, minLevel: 50 },
   { path: '/admin/audit', label: 'Audit', icon: ScrollText, minLevel: 50 },

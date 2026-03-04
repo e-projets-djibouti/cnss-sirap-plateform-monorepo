@@ -22,6 +22,7 @@ export default () => ({
     useSSL: process.env.MINIO_USE_SSL === 'true',
     avatarBucket: process.env.MINIO_AVATAR_BUCKET ?? 'avatars',
     auditBucket: process.env.MINIO_AUDIT_BUCKET ?? 'audit-archives',
+    uploadsBucket: process.env.MINIO_UPLOADS_BUCKET ?? 'uploads',
     publicUrl: process.env.MINIO_PUBLIC_URL,
   },
   redis: {

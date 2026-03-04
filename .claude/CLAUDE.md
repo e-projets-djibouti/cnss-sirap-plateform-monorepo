@@ -697,21 +697,22 @@ Seuls les originaux (`isOriginal = true`) uploadent des fichiers. Les duplicatas
 **Objectif :** Import Excel, parsing multi-onglets, détection doublons configurable.
 
 **Backend :**
-- [ ] Module Upload : endpoint multipart/form-data pour fichier Excel
-- [ ] Service ExcelParser : SheetJS, mapping 10 colonnes, parsing netAPayer
+- [x] Module Upload : endpoint multipart/form-data pour fichier Excel (`POST /api/upload/parse`)
+- [x] Service ExcelParser : SheetJS, mapping 10 colonnes, parsing netAPayer
+- [x] Stockage MinIO des uploads Excel : chaque upload est persisté et versionné (`uploads/excel/.../vNNNN-*`)
 - [ ] Module Duplicates : DuplicatesService avec algorithmes AND et OR
 - [ ] Module Settings : CRUD table Setting (clé `duplicate_columns`, `duplicate_operator`)
 - [ ] Schéma Prisma : modèle Setting → migration
 - [ ] Tests unitaires : parsing montants (tous les cas), détection doublons AND/OR
 
 **Frontend :**
-- [ ] Page Upload : zone drag & drop, sélection fichier, progression, validation format
+- [x] Page Upload : sélection fichier, validation format et envoi multipart
 - [ ] Parsing client SheetJS (même logique que backend — choix hybride)
-- [ ] Stockage sessionStorage : `cnssData` (JSON records), `cnssFileName`
-- [ ] Redirection → /dashboard après parsing réussi
-- [ ] Gestion erreurs : format invalide, fichier vide
+- [x] Stockage sessionStorage : `cnssData` (JSON records), `cnssFileName`, métadonnées MinIO upload
+- [x] Redirection → /dashboard après parsing réussi
+- [x] Gestion erreurs : format invalide, fichier vide
 
-**Validation :** Fichier Excel multi-onglets parsé correctement. Montants français parsés. Doublons AND et OR détectés. Config modifiable par admin.
+**Validation (état actuel) :** Fichier Excel multi-onglets parsé correctement et montants français normalisés; chaque upload est stocké dans MinIO avec version incrémentale; la page Upload persiste les données en session puis redirige vers le dashboard. Module doublons/settings reste à implémenter.
 
 ---
 
