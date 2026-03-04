@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -90,11 +91,11 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto) {
     await this.findOne(id);
 
-    const data: Record<string, unknown> = {};
-    if (dto.email) data['email'] = dto.email;
-    if (dto.password) data['password'] = await bcrypt.hash(dto.password, 12);
+    const data: Prisma.UserUpdateInput = {};
+    if (dto.email) data.email = dto.email;
+    if (dto.password) data.password = await bcrypt.hash(dto.password, 12);
     if (dto.firstName ?? dto.lastName ?? dto.phone) {
-      data['profile'] = {
+      data.profile = {
         update: {
           ...(dto.firstName && { firstName: dto.firstName }),
           ...(dto.lastName && { lastName: dto.lastName }),

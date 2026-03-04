@@ -9,14 +9,16 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { RolesService, UpdateRoleDto } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { AssignPermissionDto } from './dto/assign-permission.dto';
 import { RequirePermission } from '../../common/decorators/permission.decorator';
 
+@ApiTags('Roles')
 @Controller('roles')
 export class RolesController {
-  constructor(private rolesService: RolesService) {}
+  constructor(private rolesService: RolesService) { }
 
   /** GET /api/roles */
   @RequirePermission('roles:read')
