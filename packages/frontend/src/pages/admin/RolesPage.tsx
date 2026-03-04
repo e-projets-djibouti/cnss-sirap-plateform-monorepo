@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, Shield, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, X, Loader2, ShieldAlert } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -161,94 +162,129 @@ export function RolesPage() {
   const assignedIds = new Set(assignRole?.permissions?.map(p => p.permission.id) ?? []);
   const availablePerms = permissions.filter(p => !assignedIds.has(p.id));
 
+  /* ── Level badge ── */
+  function LevelBadge({ level }: { level: number }) {
+    const cls =
+      level >= 100 ? 'bg-violet-500/10 text-violet-600 ring-violet-500/20 dark:text-violet-400' :
+      level >= 50  ? 'bg-amber-500/10  text-amber-600  ring-amber-500/20  dark:text-amber-400'  :
+                     'bg-emerald-500/10 text-emerald-600 ring-emerald-500/20 dark:text-emerald-400';
+    return (
+      <span className={cn('inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1', cls)}>
+        {level}
+      </span>
+    );
+  }
+
   /* ─── Render ─── */
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* ── Page header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gestion des rôles</h1>
-          <p className="text-muted-foreground">Gérez les rôles et leurs permissions</p>
+          <h1 className="text-xl font-bold">Gestion des rôles</h1>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
+            {roles.length} rôle{roles.length !== 1 ? 's' : ''} · configuration des accès et permissions
+          </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nouveau rôle
+        <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5">
+          <Plus className="h-3.5 w-3.5" /> Nouveau rôle
         </Button>
       </div>
 
-      {/* Roles table */}
-      <div className="rounded-md border">
+      {/* ── Table ── */}
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-card">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Nom</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Niveau</TableHead>
-              <TableHead>Permissions</TableHead>
-              <TableHead>Système</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="h-10 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Rôle</TableHead>
+              <TableHead className="h-10 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Description</TableHead>
+              <TableHead className="h-10 w-20 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Niveau</TableHead>
+              <TableHead className="h-10 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Permissions</TableHead>
+              <TableHead className="h-10 w-24 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Type</TableHead>
+              <TableHead className="h-10 w-28 text-right text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {roles.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Aucun rôle trouvé
+                <TableCell colSpan={6}>
+                  <div className="flex flex-col items-center gap-2 py-10 text-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
+                      <ShieldAlert className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <p className="text-[13px] text-muted-foreground">Aucun rôle trouvé</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
             {roles.map(role => (
-              <TableRow key={role.id}>
-                <TableCell className="font-medium">{role.name}</TableCell>
-                <TableCell className="text-muted-foreground">{role.description ?? '—'}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{role.level}</Badge>
+              <TableRow key={role.id} className="group">
+                <TableCell className="py-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/8">
+                      <Shield className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-semibold">{role.name}</p>
+                      {role._count?.users !== undefined && (
+                        <p className="text-[11px] text-muted-foreground">{role._count.users} utilisateur{role._count.users !== 1 ? 's' : ''}</p>
+                      )}
+                    </div>
+                  </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-3 text-[13px] text-muted-foreground max-w-[200px] truncate">
+                  {role.description ?? <span className="text-muted-foreground/40">—</span>}
+                </TableCell>
+                <TableCell className="py-3">
+                  <LevelBadge level={role.level} />
+                </TableCell>
+                <TableCell className="py-3">
                   <div className="flex flex-wrap gap-1">
                     {(role.permissions ?? []).slice(0, 3).map(rp => (
-                      <Badge key={rp.permission.id} variant="secondary" className="text-xs">
+                      <span key={rp.permission.id}
+                        className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-secondary text-secondary-foreground">
                         {rp.permission.action}
-                      </Badge>
+                      </span>
                     ))}
                     {(role.permissions?.length ?? 0) > 3 && (
-                      <Badge variant="secondary" className="text-xs">
+                      <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
                         +{(role.permissions?.length ?? 0) - 3}
-                      </Badge>
+                      </span>
+                    )}
+                    {(role.permissions?.length ?? 0) === 0 && (
+                      <span className="text-[11px] text-muted-foreground/50">Aucune</span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell>
-                  {role.isSystem ? (
-                    <Badge variant="default">Système</Badge>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                <TableCell className="py-3">
+                  {role.isSystem
+                    ? <Badge className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/15 border-0 dark:text-blue-400">Système</Badge>
+                    : <span className="text-[11px] text-muted-foreground/40">—</span>
+                  }
                 </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => setAssignRole(role)} title="Permissions">
-                      <Shield className="h-4 w-4" />
+                <TableCell className="py-3">
+                  <div className="flex items-center justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Button variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={() => setAssignRole(role)} title="Gérer les permissions">
+                      <Shield className="h-3.5 w-3.5 text-primary" />
                     </Button>
                     {!role.isSystem && (
                       <>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(role)} title="Modifier">
-                          <Pencil className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7"
+                          onClick={() => openEdit(role)} title="Modifier">
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteRole(role)}
-                          title="Supprimer"
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteRole(role)} title="Supprimer">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </>
                     )}
@@ -260,158 +296,148 @@ export function RolesPage() {
         </Table>
       </div>
 
-      {/* ── Create Modal ── */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Créer un rôle</DialogTitle>
-            <DialogDescription>Définissez le nom, la description et le niveau d'accès.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={createForm.handleSubmit(handleCreate)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="c-name">Nom</Label>
-              <Input id="c-name" placeholder="ex: MANAGER" {...createForm.register('name')} />
-              {createForm.formState.errors.name && (
-                <p className="text-sm text-destructive">{createForm.formState.errors.name.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="c-desc">Description</Label>
-              <Input id="c-desc" placeholder="Description optionnelle" {...createForm.register('description')} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="c-level">Niveau (1–100)</Label>
-              <Input id="c-level" type="number" min={1} max={100} {...createForm.register('level')} />
-              {createForm.formState.errors.level && (
-                <p className="text-sm text-destructive">{createForm.formState.errors.level.message}</p>
-              )}
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={actionLoading}>
-                {actionLoading ? 'Création...' : 'Créer'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Edit Modal ── */}
-      <Dialog open={!!editRole} onOpenChange={open => { if (!open) setEditRole(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier le rôle</DialogTitle>
-            <DialogDescription>Modifiez les informations du rôle.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="e-name">Nom</Label>
-              <Input id="e-name" {...editForm.register('name')} />
-              {editForm.formState.errors.name && (
-                <p className="text-sm text-destructive">{editForm.formState.errors.name.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="e-desc">Description</Label>
-              <Input id="e-desc" {...editForm.register('description')} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="e-level">Niveau (1–100)</Label>
-              <Input id="e-level" type="number" min={1} max={100} {...editForm.register('level')} />
-              {editForm.formState.errors.level && (
-                <p className="text-sm text-destructive">{editForm.formState.errors.level.message}</p>
-              )}
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditRole(null)}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={actionLoading}>
-                {actionLoading ? 'Sauvegarde...' : 'Sauvegarder'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* ── Shared form fields helper ── */}
+      {(['create', 'edit'] as const).map(mode => {
+        const isCreate = mode === 'create';
+        const form = isCreate ? createForm : editForm;
+        const open = isCreate ? createOpen : !!editRole;
+        const onClose = isCreate ? () => setCreateOpen(false) : () => setEditRole(null);
+        const onSubmit = isCreate ? handleCreate : handleEdit;
+        return (
+          <Dialog key={mode} open={open} onOpenChange={o => { if (!o) onClose(); }}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-base">{isCreate ? 'Créer un rôle' : 'Modifier le rôle'}</DialogTitle>
+                <DialogDescription className="text-[13px]">
+                  {isCreate ? "Définissez le nom, la description et le niveau d'accès." : "Modifiez les informations du rôle."}
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1">
+                <div className="space-y-1.5">
+                  <Label htmlFor={`${mode}-name`} className="text-[13px]">Nom du rôle</Label>
+                  <Input id={`${mode}-name`} placeholder="ex : MANAGER" {...form.register('name')} />
+                  {form.formState.errors.name && (
+                    <p className="text-[12px] text-destructive">{form.formState.errors.name.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor={`${mode}-desc`} className="text-[13px]">Description <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
+                  <Input id={`${mode}-desc`} placeholder="Courte description du rôle" {...form.register('description')} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor={`${mode}-level`} className="text-[13px]">Niveau d'accès <span className="text-muted-foreground font-normal">(1–100)</span></Label>
+                  <Input id={`${mode}-level`} type="number" min={1} max={100} {...form.register('level')} />
+                  <p className="text-[11px] text-muted-foreground">100 = propriétaire · 50 = admin · 10 = agent</p>
+                  {form.formState.errors.level && (
+                    <p className="text-[12px] text-destructive">{form.formState.errors.level.message}</p>
+                  )}
+                </div>
+                <DialogFooter className="pt-2">
+                  <Button type="button" variant="outline" size="sm" onClick={onClose}>Annuler</Button>
+                  <Button type="submit" size="sm" disabled={actionLoading} className="gap-1.5">
+                    {actionLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {isCreate ? 'Créer le rôle' : 'Enregistrer'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        );
+      })}
 
       {/* ── Delete Confirm ── */}
-      <Dialog open={!!deleteRole} onOpenChange={open => { if (!open) setDeleteRole(null); }}>
-        <DialogContent>
+      <Dialog open={!!deleteRole} onOpenChange={o => { if (!o) setDeleteRole(null); }}>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Supprimer le rôle</DialogTitle>
-            <DialogDescription>
-              Êtes-vous sûr de vouloir supprimer le rôle <strong>{deleteRole?.name}</strong> ?
+            <DialogTitle className="text-base">Supprimer le rôle</DialogTitle>
+            <DialogDescription className="text-[13px]">
+              Le rôle <strong className="text-foreground">«{deleteRole?.name}»</strong> sera définitivement supprimé.
               Cette action est irréversible.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteRole(null)}>Annuler</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={actionLoading}>
-              {actionLoading ? 'Suppression...' : 'Supprimer'}
+          <DialogFooter className="pt-2">
+            <Button variant="outline" size="sm" onClick={() => setDeleteRole(null)}>Annuler</Button>
+            <Button variant="destructive" size="sm" onClick={handleDelete} disabled={actionLoading} className="gap-1.5">
+              {actionLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Supprimer
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ── Assign Permissions Modal ── */}
-      <Dialog open={!!assignRole} onOpenChange={open => { if (!open) setAssignRole(null); }}>
-        <DialogContent className="max-w-lg">
+      {/* ── Assign Permissions ── */}
+      <Dialog open={!!assignRole} onOpenChange={o => { if (!o) setAssignRole(null); }}>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Permissions — {assignRole?.name}</DialogTitle>
-            <DialogDescription>Assignez ou retirez des permissions à ce rôle.</DialogDescription>
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Shield className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-base">{assignRole?.name}</DialogTitle>
+                <DialogDescription className="text-[12px]">Gérer les permissions de ce rôle</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Assigned permissions */}
-            <div>
-              <p className="mb-2 text-sm font-medium">Permissions assignées</p>
+            {/* Assigned */}
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="mb-3 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Permissions assignées ({(assignRole?.permissions ?? []).length})
+              </p>
               {(assignRole?.permissions ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucune permission assignée</p>
+                <p className="text-[13px] text-muted-foreground">Aucune permission assignée</p>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {(assignRole?.permissions ?? []).map(rp => (
-                    <Badge key={rp.permission.id} variant="secondary" className="gap-1 pr-1">
+                    <span key={rp.permission.id}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-background px-2.5 py-1 text-[12px] font-medium border border-border shadow-sm">
                       {rp.permission.action}
                       <button
                         onClick={() => handleRemovePermission(rp.permission.id)}
-                        className="ml-1 rounded-full hover:bg-muted"
                         disabled={actionLoading}
+                        className="text-muted-foreground/50 hover:text-destructive transition-colors disabled:opacity-40"
                       >
                         <X className="h-3 w-3" />
                       </button>
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Add permission */}
+            {/* Add */}
             {availablePerms.length > 0 && (
-              <div className="flex gap-2">
-                <Select value={selectedPermId} onValueChange={setSelectedPermId}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Choisir une permission..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availablePerms.map(p => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.action}
-                        {p.description && <span className="text-muted-foreground"> — {p.description}</span>}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleAssign} disabled={!selectedPermId || actionLoading}>
-                  Assigner
-                </Button>
+              <div>
+                <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Ajouter une permission
+                </p>
+                <div className="flex gap-2">
+                  <Select value={selectedPermId} onValueChange={setSelectedPermId}>
+                    <SelectTrigger className="flex-1 text-[13px]">
+                      <SelectValue placeholder="Choisir une permission…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availablePerms.map(p => (
+                        <SelectItem key={p.id} value={p.id} className="text-[13px]">
+                          <span className="font-medium">{p.action}</span>
+                          {p.description && <span className="ml-1.5 text-muted-foreground">— {p.description}</span>}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" onClick={handleAssign} disabled={!selectedPermId || actionLoading} className="gap-1.5">
+                    {actionLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Assigner
+                  </Button>
+                </div>
               </div>
             )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignRole(null)}>Fermer</Button>
+            <Button variant="outline" size="sm" onClick={() => setAssignRole(null)}>Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

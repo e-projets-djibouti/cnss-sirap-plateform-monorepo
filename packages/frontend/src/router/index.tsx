@@ -23,6 +23,9 @@ const DashboardPage = lazy(() =>
 const UploadPage = lazy(() =>
   import('@/pages/upload/UploadPage').then((module) => ({ default: module.UploadPage })),
 );
+const AnalysisPage = lazy(() =>
+  import('@/pages/analysis/AnalysisPage').then((module) => ({ default: module.AnalysisPage })),
+);
 const ProfilePage = lazy(() =>
   import('@/pages/profile/ProfilePage').then((module) => ({ default: module.ProfilePage })),
 );
@@ -98,6 +101,10 @@ export const router = createBrowserRouter([
               {
                 path: 'upload',
                 element: withSuspense(<UploadPage />),
+              },
+              {
+                path: 'analysis',
+                element: withSuspense(<AnalysisPage />),
               },
               {
                 path: 'profile',

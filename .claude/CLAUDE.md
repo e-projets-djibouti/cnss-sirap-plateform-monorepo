@@ -722,23 +722,23 @@ Seuls les originaux (`isOriginal = true`) uploadent des fichiers. Les duplicatas
 **Objectif :** 11 KPI, 7 graphiques, module analyse avec filtres et pagination.
 
 **Backend :**
-- [ ] Module Dashboard : DashboardService → calcul 11 KPI
-- [ ] Fonctions : calculateAmountOnePerGroup, calculateAmountWithoutDuplicates
-- [ ] Agrégations : par banque, période, nature, tranche, type relation
-- [ ] Endpoints export PDF et Excel
-- [ ] Dashboard Admin : stats depuis table bordereaux
+- [x] Module Dashboard : DashboardService → calcul 11 KPI
+- [x] Fonctions : calculateAmountOnePerGroup, calculateAmountWithoutDuplicates
+- [x] Agrégations : par banque, période, nature, tranche, type relation
+- [x] Endpoints export PDF et Excel
+- [x] Dashboard Admin : endpoint disponible (`GET /api/dashboard/admin`) avec stats DB disponibles (users/audit/settings)
 
 **Frontend :**
-- [ ] Page Dashboard : 11 cartes KPI (formatage DJF avec séparateur milliers)
-- [ ] 7 graphiques Recharts avec toggle bar/line
+- [x] Page Dashboard : 11 cartes KPI (formatage DJF avec séparateur milliers)
+- [x] 7 graphiques Recharts avec toggle bar/line
 - [ ] Dashboard Admin (owner toggle / admin auto)
-- [ ] Page Analyse : table complète avec toutes les colonnes
-- [ ] Filtres : recherche texte, type relation, banque, doublons only
-- [ ] 9 cartes statistiques de synthèse
-- [ ] Pagination : 10/20/50/100, navigation précédent/suivant
-- [ ] Export PDF (rapport analytique avec logo) et Excel (3 onglets)
+- [x] Page Analyse : table complète avec toutes les colonnes
+- [x] Filtres : recherche texte, type relation, banque, doublons only
+- [x] 9 cartes statistiques de synthèse
+- [x] Pagination : 10/20/50/100, navigation précédent/suivant
+- [x] Export PDF (rapport analytique avec logo) et Excel (3 onglets)
 
-**Validation :** 11 KPI corrects selon les formules. Écarts calculés. Graphiques interactifs. Filtres et pagination fonctionnels. Exports générés.
+**Validation (état actuel) :** 11 KPI calculés selon les règles métier (total, 1/groupe, sans doublons, écarts, assurés/conjoints, doublons/groupes, banques uniques); 7 graphiques Recharts disponibles avec toggle bar/line; page Analyse avec filtres + pagination opérationnelle; exports PDF/Excel générés côté API et téléchargeables depuis le frontend. Le mode dashboard admin avec source `bordereaux` reste à finaliser quand le modèle `Bordereau` sera branché dans le backend courant.
 
 ---
 
