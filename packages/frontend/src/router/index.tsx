@@ -62,6 +62,10 @@ export const router = createBrowserRouter([
         element: withSuspense(<LoginPage />),
       },
       {
+        path: '/auth',
+        element: withSuspense(<LoginPage />),
+      },
+      {
         path: '/forgot-password',
         element: withSuspense(<ForgotPasswordPage />),
       },

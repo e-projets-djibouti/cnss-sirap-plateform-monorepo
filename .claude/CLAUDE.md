@@ -646,42 +646,49 @@ Seuls les originaux (`isOriginal = true`) uploadent des fichiers. Les duplicatas
 
 ### PHASE 1 — Socle & Infrastructure (Semaines 1–2) 🔵
 
-**Objectif :** Monorepo fonctionnel, auth JWT, rôles, navigation conditionnée.
+**Objectif :** Socle sécurité et administration prêt en production interne (auth, RBAC dynamique, profil utilisateur, observabilité de base).
 
-**Backend :**
-- [ ] Init monorepo npm workspaces (root + shared + backend + frontend)
-- [ ] Init NestJS : TypeScript strict, ConfigModule, Prisma, class-validator
-- [ ] Schéma Prisma : User, UserRole (enum), RefreshToken, Profile → première migration
-- [ ] Seed : créer utilisateur owner initial
-- [ ] Module Auth : AuthController + AuthService
-  - POST `/auth/login` → valider email/password, retourner accessToken + refreshToken
-  - POST `/auth/refresh` → valider refreshToken, rotation, nouveau couple
-  - POST `/auth/logout` → supprimer refreshToken
-  - GET `/auth/me` → profil + rôles
-- [ ] JWT Strategy (passport-jwt) : extraction Bearer token, validation
-- [ ] JwtAuthGuard (global) + @Public() decorator pour bypass
-- [ ] RolesGuard + @Roles() decorator
-- [ ] @CurrentUser() decorator (injecte le user dans le handler)
-- [ ] Module Users : CRUD + gestion rôles (admin+ requis)
-- [ ] Middleware global : CORS, helmet, rate limiting, validation pipe
-- [ ] Config centralisée : JWT_SECRET, JWT_EXPIRES, DB_URL, MINIO_*
+**Backend (réellement implémenté) :**
+- [x] Monorepo PNPM workspaces opérationnel (`backend`, `frontend`, `shared`)
+- [x] NestJS 10 strict + `ConfigModule` global + Prisma + `class-validator`
+- [x] Schéma Prisma en place : `Role`, `Permission`, `RolePermission`, `User`, `Profile`, `RefreshToken`, `AuditLog`
+- [x] Seed initial : rôles système (`OWNER`, `ADMIN`, `AGENT`), permissions par défaut, compte owner
+- [x] Module Auth complet :
+  - `POST /api/auth/login`
+  - `POST /api/auth/refresh`
+  - `POST /api/auth/logout`
+  - `GET /api/auth/me`
+  - `PATCH /api/auth/me`
+  - `POST /api/auth/me/avatar`
+  - `POST /api/auth/forgot-password`
+  - `POST /api/auth/reset-password`
+  - `POST /api/auth/change-password`
+- [x] JWT strategy + guard global + décorateur `@Public()`
+- [x] Contrôle d’accès par permissions (`@RequirePermission`) + cache permissions + garde dédiée
+- [x] Décorateur `@CurrentUser()` disponible et utilisé dans les handlers auth
+- [x] Module Users : liste paginée, détail, création, modification, désactivation (soft delete), changement de rôle
+- [x] Modules Roles/Permissions : CRUD rôles, attribution/retrait de permissions, gestion permissions custom
+- [x] Middleware sécurité global : CORS, Helmet, cookies HTTP-only, throttling global + role-based rate limit, validation pipe stricte
+- [x] Config centralisée : DB, JWT, MinIO (avatars + audit archives), SMTP, Redis, sécurité
 
-**Frontend :**
-- [ ] Init React 18 + Vite + React Router 7 + Tailwind + shadcn/ui
-- [ ] Layout : AppSidebar + AppNavbar + AppFooter
-- [ ] Page Auth (login) : formulaire email/password, erreurs
-- [ ] AuthContext : login, logout, refresh auto, profil, rôle résolu
-- [ ] Client API (axios) : baseURL, intercepteur Authorization header, intercepteur 401 → refresh
-- [ ] ProtectedRoute : redirige vers /auth si non connecté, vérifie rôle
-- [ ] Navigation sidebar filtrée par rôle
-- [ ] Thème clair/sombre
+**Frontend (réellement implémenté) :**
+- [x] React + TypeScript + Vite + React Router + Tailwind + composants UI
+- [x] Layout applicatif (`MainLayout`) avec navigation protégée
+- [x] Pages Auth : login, mot de passe oublié, reset password, changement de mot de passe
+- [x] `AuthContext` + client API axios (Bearer token + refresh cookie)
+- [x] `ProtectedRoute` avec protection par niveau (`minLevel`) et routes admin dédiées
+- [x] Dashboard opérationnel de base
+- [x] Page profil (infos + sécurité) avec upload avatar
+- [x] Pages administration : utilisateurs, rôles, audit
 
 **Shared :**
-- [ ] Types : CNSSRecord, CNSSStats, AppRole, LoginDto, TokenResponse
-- [ ] Constantes : ROLE_PRIORITY, BANKS, AMOUNT_RANGES
-- [ ] Utils : formatAmount, numberToFrenchWords
+- [x] Package partagé actif (`@sirap/shared`)
+- [x] Types : `CNSSRecord`, `CNSSStats`, `AppRole`, DTOs auth (`LoginDto`, `RefreshTokenDto`, `ForgotPasswordDto`, `ResetPasswordDto`, `ChangePasswordDto`, `UpdateProfileDto`)
+- [x] Types communs pagination (`PaginationDto`, `PaginatedResult`)
+- [x] Constantes : `ROLE_PRIORITY`, `BANKS`, `AMOUNT_RANGES` (+ constantes techniques existantes)
+- [x] Utilitaires : `formatAmount`, `numberToFrenchWords`
 
-**Validation :** Owner peut se connecter → voir dashboard vide → créer un user → se déconnecter. Navigation filtrée. Refresh token fonctionne.
+**Validation (état actuel) :** Un owner peut se connecter, voir le dashboard et se déconnecter; un owner peut créer un utilisateur avec un rôle; la navigation est filtrée selon le niveau de rôle; les routes protégées redirigent vers `/auth` si non connecté; le refresh token fonctionne (session persistante), avec rotation et cookie HTTP-only.
 
 ---
 

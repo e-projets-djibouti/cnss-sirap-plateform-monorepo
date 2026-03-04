@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (logoutCalled.current) return;
       logoutCalled.current = true;
       setUser(null);
-      navigate('/login', { replace: true });
+      navigate('/auth', { replace: true });
       setTimeout(() => { logoutCalled.current = false; }, 1000);
     };
     window.addEventListener('auth:logout', handle);
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       tokenStorage.clear();
       setUser(null);
-      navigate('/login', { replace: true });
+      navigate('/auth', { replace: true });
     }
   };
 

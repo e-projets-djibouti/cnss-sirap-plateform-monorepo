@@ -18,7 +18,7 @@ export function ProtectedRoute({ minLevel = 0 }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   if (user?.mustChangePassword && location.pathname !== '/change-password') {
